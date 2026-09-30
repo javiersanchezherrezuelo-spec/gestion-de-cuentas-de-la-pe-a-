@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.informales.pena.cuenta.CuentaService;
 import com.informales.pena.cuenta.DeudaDto;
+import com.informales.pena.notificacion.AjustesService;
 import com.informales.pena.producto.ProductoService;
 
 /** Pestaña "Resumen": deudas de todos y stock, visible para cualquier miembro. */
@@ -16,10 +17,13 @@ public class ResumenController {
 
     private final CuentaService cuentaService;
     private final ProductoService productoService;
+    private final AjustesService ajustesService;
 
-    public ResumenController(CuentaService cuentaService, ProductoService productoService) {
+    public ResumenController(CuentaService cuentaService, ProductoService productoService,
+                             AjustesService ajustesService) {
         this.cuentaService = cuentaService;
         this.productoService = productoService;
+        this.ajustesService = ajustesService;
     }
 
     @GetMapping("/api/resumen")
@@ -28,6 +32,6 @@ public class ResumenController {
         BigDecimal total = deudas.stream().map(DeudaDto::deuda)
                 .filter(d -> d.signum() > 0)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new ResumenDto(deudas, total, productoService.listarActivos());
+        return new ResumenDto(deudas, total, productoService.listarActivos(), ajustesService.obtener().isCanalWhatsapp());
     }
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { api } from '../api/cliente.js'
 import { useDatos } from '../api/useDatos.js'
 import Estado from '../components/Estado.jsx'
+import Notificaciones from '../components/Notificaciones.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import { formatoEuros, formatoFecha } from '../formato.js'
@@ -51,6 +52,8 @@ export default function MiCuenta() {
           </div>
         </>
       )}
+
+      <Notificaciones />
 
       <div className="tarjeta">
         <h2>Mis datos</h2>

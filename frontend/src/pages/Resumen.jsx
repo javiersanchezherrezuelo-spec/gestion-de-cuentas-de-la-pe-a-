@@ -13,6 +13,17 @@ export default function Resumen() {
     <section>
       <h1 className="titulo-pagina">Resumen</h1>
 
+      {datos.whatsapp && (
+        <a
+          className="boton boton-whatsapp boton-ancho"
+          href={`https://wa.me/?text=${encodeURIComponent(textoWhatsapp(datos))}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          💬 Compartir por WhatsApp
+        </a>
+      )}
+
       <div className="tarjeta">
         <div className="tarjeta-cabecera">
           <h2>Deudas</h2>
@@ -65,4 +76,21 @@ export function Importe({ deuda }) {
   if (valor > 0) return <span className="importe-debe">{formatoEuros(valor)}</span>
   if (valor < 0) return <span className="importe-favor">{formatoEuros(-valor)} a favor</span>
   return <span className="importe-cero">Al día</span>
+}
+
+/** Mensaje para pegar en el grupo de WhatsApp con las deudas y lo que se está acabando. */
+function textoWhatsapp({ deudas, totalDeuda, productos }) {
+  const lineas = ['🍻 *Peña Los Informales*', '', '*Deudas*']
+  const conDeuda = deudas.filter((d) => Number(d.deuda) > 0)
+  if (conDeuda.length === 0) lineas.push('¡Nadie debe nada! 🎉')
+  else {
+    conDeuda.forEach((d) => lineas.push(`• ${d.nombre}: ${formatoEuros(d.deuda)}`))
+    lineas.push(`Total: ${formatoEuros(totalDeuda)}`)
+  }
+  const bajos = productos.filter((p) => p.stockBajo)
+  if (bajos.length > 0) {
+    lineas.push('', '*Hay que reponer*')
+    bajos.forEach((p) => lineas.push(`• ${p.emoji ? `${p.emoji} ` : ''}${p.nombre}: quedan ${p.stock}`))
+  }
+  return lineas.join('\n')
 }
