@@ -1,0 +1,59 @@
+# Arranca la app y MySQL en cualquier ordenador con Docker:
+#   docker compose up -d --build
+# Los valores secretos se leen del archivo .env (mira .env.example).
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: pena_informales
+      MYSQL_USER: pena
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en el archivo .env}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Falta DB_ROOT_PASSWORD en el archivo .env}
+      TZ: Europe/Madrid
+    volumes:
+      # Los datos se guardan aquí y no se pierden al reiniciar o actualizar
+      - datos-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      DB_URL: jdbc:mysql://db:3306/pena_informales?serverTimezone=Europe/Madrid&allowPublicKeyRetrieval=true
+      DB_USER: pena
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Falta JWT_SECRET en el archivo .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Falta ADMIN_PASSWORD en el archivo .env}
+      APP_CONTACTO: ${APP_CONTACTO:-mailto:pena.informales@example.com}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+
+  # Opcional: dirección HTTPS gratis de Cloudflare para entrar desde fuera de casa
+  # y poder activar las notificaciones. Se arranca con:
+  #   docker compose --profile tunel up -d
+  tunel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://app:8080
+    depends_on:
+      - app
+    profiles: ["tunel"]
+
+volumes:
+  datos-mysql:

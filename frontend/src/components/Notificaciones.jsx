@@ -30,6 +30,13 @@ export default function Notificaciones() {
   let contenido
   if (estado === 'cargando') {
     contenido = null
+  } else if (!window.isSecureContext) {
+    contenido = (
+      <p className="texto-suave">
+        Las notificaciones solo funcionan si la web se abre con <strong>https://</strong>. Pide a un admin la dirección
+        segura.
+      </p>
+    )
   } else if (estado === 'no-soportado' && esIOS() && !estaInstalada()) {
     contenido = (
       <p className="texto-suave">

@@ -87,6 +87,56 @@ Cada miembro las activa en *Mi cuenta → Activar notificaciones*.
 - **En iPhone** (iOS 16.4 o posterior) primero hay que añadir la web a la pantalla de inicio:
   *Compartir → Añadir a pantalla de inicio*, y abrirla desde ese icono.
 
+## Probarla en un ordenador con Linux (Docker)
+
+La app y MySQL arrancan juntas con Docker Compose. Las instrucciones son para Ubuntu o Debian.
+
+```bash
+# 1. Instalar Docker (solo la primera vez) y cerrar sesión y volver a entrar
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+
+# 2. Descargar el proyecto
+git clone https://github.com/javiersanchezherrezuelo-spec/gestion-de-cuentas-de-la-pe-a-.git
+cd gestion-de-cuentas-de-la-pe-a-
+
+# 3. Crear el archivo .env con claves aleatorias (cambia la contraseña del admin y el email)
+cat > .env <<EOF
+DB_PASSWORD=$(openssl rand -hex 16)
+DB_ROOT_PASSWORD=$(openssl rand -hex 16)
+JWT_SECRET=$(openssl rand -hex 32)
+ADMIN_PASSWORD=pon-aqui-tu-contraseña
+APP_CONTACTO=mailto:tu-email@gmail.com
+EOF
+
+# 4. Construir y arrancar (la primera vez tarda unos minutos)
+docker compose up -d --build
+```
+
+- Desde el propio ordenador: http://localhost:8080
+- Desde el móvil, conectado a la misma wifi: `http://IP-DEL-ORDENADOR:8080`. La IP la ves con `hostname -I`.
+  Si no carga, abre el puerto con `sudo ufw allow 8080`.
+
+**HTTPS y acceso desde fuera de casa.** Las notificaciones y la instalación en el móvil necesitan `https://`.
+Cloudflare da una dirección HTTPS gratis, sin cuenta:
+
+```bash
+docker compose --profile tunel up -d
+docker compose logs tunel | grep trycloudflare
+```
+
+Esa dirección (`https://algo.trycloudflare.com`) cambia cada vez que se reinicia el túnel.
+Si cambia, cada uno tiene que volver a activar las notificaciones. Para algo definitivo hace falta un dominio propio.
+
+**Comandos útiles**
+
+| Para… | Comando |
+|---|---|
+| Ver los logs | `docker compose logs -f app` |
+| Parar | `docker compose down` (los datos se conservan) |
+| Actualizar a la última versión | `git pull && docker compose up -d --build` |
+| Copia de seguridad | `docker compose exec db sh -c 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" pena_informales' > copia.sql` |
+
 ## Publicarla en internet
 
 El `Dockerfile` construye la web y el backend en una sola imagen. Cualquier hosting con Docker sirve.
